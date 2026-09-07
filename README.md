@@ -22,11 +22,19 @@ pip install lucent-pack
 micromamba create -f environment.yaml --platform=emscripten-wasm32
 ```
 
+5. Pack the app and its environment
 
+```bash
+lucent build \
+  --prefix-dir /path/to/wasm/environment \
+  --app ./app --outdir /path/to/output/dir/ \
+  --title "My Shiny App" # (optional)
+```
 
+6. (Optional) Serve with lucent
 
-lucent build --prefix-dir ./_prefix-wasm --app ./app --outdir ./_site --title "My Shiny App"
-lucent serve _site
+```bash
+lucent serve /path/to/output/dir
 ```
 
 Open the URL printed by `lucent serve` (default `http://127.0.0.1:8000/`).
@@ -39,4 +47,4 @@ Open the URL printed by `lucent serve` (default `http://127.0.0.1:8000/`).
 4. Push to `main`. The [pages workflow](.github/workflows/pages.yml) will:
    - create the wasm prefix from `environment.yaml`
    - install `lucent-pack` and build the site
-   - deploy `_site/` to GitHub Pages
+   - deploy the site to GitHub Pages
