@@ -9,3 +9,4 @@ dependencies:
   # Additional dependencies required by the app
   - r-bslib
   - r-e1071
+  - r-thematic
