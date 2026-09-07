@@ -1,0 +1,71 @@
+name: Deploy Lucent Pages
+
+on:
+  push:
+    branches: main
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+defaults:
+  run:
+    shell: bash -el {0}
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Install micromamba
+        uses: mamba-org/setup-micromamba@v3
+        with:
+          environment-name: ci-env
+          create-args: >-
+            python
+            pip
+            nodejs
+            lucent-pack
+          init-shell: bash
+
+      - name: Create wasm prefix
+        run: |
+          set -euo pipefail
+          micromamba create -y -p ./_prefix-wasm \
+            -f environment.yaml \
+            --platform=emscripten-wasm32
+
+      - name: Pack site with lucent
+        run: |
+          set -euo pipefail
+          lucent build \
+            --prefix-dir ./_prefix-wasm \
+            --app ./app \
+            --outdir ./_site \
+            --title "Shiny App"
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v7
+        with:
+          path: _site
+
+  deploy:
+    needs: build
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v5

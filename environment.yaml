@@ -1,0 +1,11 @@
+name: shinyapp-env
+channels:
+  - https://repo.prefix.dev/emscripten-forge-4x
+  - conda-forge
+dependencies:
+  # Mandatory requirements
+  - r-main
+  - r-shiny
+  # Additional dependencies required by the app
+  - r-bslib
+  - r-e1071
