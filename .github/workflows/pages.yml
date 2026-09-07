@@ -34,8 +34,11 @@ jobs:
             python
             pip
             nodejs
-            lucent-pack
           init-shell: bash
+
+      # Remove once lucent-pack lands on conda-forge
+      - name: Install lucent-pack
+        run: pip install lucent-pack
 
       - name: Create wasm prefix
         run: |
