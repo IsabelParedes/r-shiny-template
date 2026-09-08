@@ -26,8 +26,8 @@ ui <- page_fluid(
       )
     ),
     mainPanel(
-      verbatimTextOutput("summary"),
-      plotOutput("plot")
+      plotOutput("plot"),
+      verbatimTextOutput("summary")
     )
   )
 )
