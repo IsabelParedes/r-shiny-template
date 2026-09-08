@@ -36,16 +36,20 @@ server <- function(input, output, session) {
   fitted <- reactive({
     set.seed(42)
     n <- input$n
-    # Even coverage of the unit square + smooth 2D target (low noise)
-    x <- matrix(runif(n * 2), ncol = 2)
-    y <- exp(-((x[, 1] - 0.5)^2 + (x[, 2] - 0.5)^2) / (2 * 0.15^2)) +
-      0.03 * rnorm(n)
+    n1 <- n %/% 2
+    n2 <- n - n1
+    # Two moderately separated Gaussian blobs
+    x <- rbind(
+      cbind(rnorm(n1, 0.30, 0.10), rnorm(n1, 0.30, 0.10)),
+      cbind(rnorm(n2, 0.70, 0.10), rnorm(n2, 0.70, 0.10))
+    )
+    y <- factor(c(rep("A", n1), rep("B", n2)))
     list(
       model = svm(
         x, y,
         kernel = input$kernel,
         cost = 2^input$cost,
-        type = "eps-regression"
+        type = "C-classification"
       ),
       x = x,
       y = y
@@ -59,30 +63,37 @@ server <- function(input, output, session) {
   output$plot <- renderPlot({
     fit <- fitted()
     m <- fit$model
-    xs <- seq(0, 1, length.out = 80)
-    ys <- seq(0, 1, length.out = 80)
-    g <- expand.grid(V1 = xs, V2 = ys)
-    z <- matrix(predict(m, as.matrix(g)), length(xs), length(ys))
+    pad <- 0.05
+    xr <- range(fit$x[, 1]) + c(-pad, pad)
+    yr <- range(fit$x[, 2]) + c(-pad, pad)
+    xs <- seq(xr[1], xr[2], length.out = 80)
+    ys <- seq(yr[1], yr[2], length.out = 80)
+    g <- as.matrix(expand.grid(V1 = xs, V2 = ys))
+    pred <- predict(m, g, decision.values = TRUE)
+    z <- matrix(attr(pred, "decision.values"), length(xs), length(ys))
 
     pal <- hcl.colors(64, input$palette)
+    class_cols <- pal[c(12, 52)]
 
     par(mar = c(4, 4, 2, 1))
     image(
       x = xs, y = ys, z = z,
       col = pal,
-      xlab = "X1", ylab = "X2",
-      main = paste("SVM predictions –", m$kernel)
+      xlab = expression(x[1]), ylab = expression(x[2]),
+      main = paste("SVM decision –", m$kernel)
     )
-    contour(xs, ys, z, add = TRUE, drawlabels = TRUE, col = "white", lwd = 1.5)
+    contour(xs, ys, z, levels = 0, add = TRUE, drawlabels = TRUE, col = "white", lwd = 2)
+    contour(xs, ys, z, levels = c(-1, 1), add = TRUE, drawlabels = TRUE, col = "white", lwd = 1.5, lty = "44")
 
     pts <- fit$x
     sv <- m$index
     nonsv <- setdiff(seq_len(nrow(pts)), sv)
+    cols <- class_cols[as.integer(fit$y)]
 
     if (length(nonsv)) {
-      points(pts[nonsv, , drop = FALSE], pch = 21, cex = 0.8, bg = "grey15", col = "grey60", lwd = 1.5)
+      points(pts[nonsv, , drop = FALSE], pch = 21, cex = 1.0, bg = cols[nonsv], col = cols[nonsv], lwd = 1)
     }
-    points(pts[sv, , drop = FALSE], pch = 21, cex = 1.35, bg = "grey15", col = "white", lwd = 2)
+    points(pts[sv, , drop = FALSE], pch = 21, cex = 1.4, bg = cols[sv], col = "white", lwd = 2)
   })
 }
 
