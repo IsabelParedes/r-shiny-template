@@ -11,7 +11,11 @@ ui <- page_fluid(
   titlePanel("SVM Demo"),
   sidebarLayout(
     sidebarPanel(
-      selectInput("kernel", "Kernel", c("linear", "polynomial", "radial", "sigmoid")),
+      selectInput(
+        "kernel", "Kernel",
+        c("linear", "polynomial", "radial", "sigmoid"),
+        selected = "radial"
+      ),
       sliderInput("cost", "Cost (log2)", min = 0, max = 4, value = 2, step = 1),
       sliderInput("n", "Training samples", min = 20, max = 200, value = 50, step = 10),
       selectInput(
@@ -32,8 +36,10 @@ server <- function(input, output, session) {
   fitted <- reactive({
     set.seed(42)
     n <- input$n
+    # Even coverage of the unit square + smooth 2D target (low noise)
     x <- matrix(runif(n * 2), ncol = 2)
-    y <- sin(x[, 1] * 2 * pi) + 0.3 * rnorm(n)
+    y <- exp(-((x[, 1] - 0.5)^2 + (x[, 2] - 0.5)^2) / (2 * 0.15^2)) +
+      0.03 * rnorm(n)
     list(
       model = svm(
         x, y,
@@ -53,15 +59,17 @@ server <- function(input, output, session) {
   output$plot <- renderPlot({
     fit <- fitted()
     m <- fit$model
-    xs <- seq(0, 1, length.out = 50)
-    ys <- seq(0, 1, length.out = 50)
+    xs <- seq(0, 1, length.out = 80)
+    ys <- seq(0, 1, length.out = 80)
     g <- expand.grid(V1 = xs, V2 = ys)
-    z <- matrix(predict(m, as.matrix(g)), 50, 50)
+    z <- matrix(predict(m, as.matrix(g)), length(xs), length(ys))
+
+    pal <- hcl.colors(64, input$palette)
 
     par(mar = c(4, 4, 2, 1))
     image(
       x = xs, y = ys, z = z,
-      col = hcl.colors(64, input$palette),
+      col = pal,
       xlab = "X1", ylab = "X2",
       main = paste("SVM predictions –", m$kernel)
     )
@@ -69,19 +77,12 @@ server <- function(input, output, session) {
 
     pts <- fit$x
     sv <- m$index
-    yr <- range(fit$y, na.rm = TRUE)
-    yi <- if (diff(yr) < 1e-9) {
-      rep(50L, length(fit$y))
-    } else {
-      pmax(1L, pmin(100L, as.integer(round(1 + 99 * (fit$y - yr[1]) / diff(yr)))))
-    }
-    cols <- hcl.colors(100, input$palette)[yi]
     nonsv <- setdiff(seq_len(nrow(pts)), sv)
 
     if (length(nonsv)) {
-      points(pts[nonsv, , drop = FALSE], pch = 16, cex = 0.9, col = cols[nonsv])
+      points(pts[nonsv, , drop = FALSE], pch = 21, cex = 0.8, bg = "grey15", col = "grey60", lwd = 1.5)
     }
-    points(pts[sv, , drop = FALSE], pch = 21, cex = 1.3, bg = cols[sv], col = "white", lwd = 1.5)
+    points(pts[sv, , drop = FALSE], pch = 21, cex = 1.35, bg = "grey15", col = "white", lwd = 2)
   })
 }
 
