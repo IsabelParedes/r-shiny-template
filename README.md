@@ -15,7 +15,7 @@ pip install lucent-pack
 ```
 
 2. Replace `app/` with any Shiny app (keep an `app.R` or Shiny directory layout).
-3. Edit `environment.yaml` to includes every R package the app needs.
+3. Edit `environment.yaml` to include every R package the app needs.
 4. Create the WebAssembly environment.
 
 ```bash
