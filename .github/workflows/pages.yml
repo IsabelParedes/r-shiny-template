@@ -34,7 +34,7 @@ jobs:
             python
             pip
             nodejs
-            lucent-pack >=0.1.1
+            lucent-pack>=0.1.1
           init-shell: bash
 
       - name: Create wasm prefix
