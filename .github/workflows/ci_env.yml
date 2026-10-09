@@ -1,8 +1,0 @@
-name: ci-env
-channels:
-  - conda-forge
-dependencies:
-  - python
-  - pip
-  - nodejs
-  - lucent-pack >=0.1.1
