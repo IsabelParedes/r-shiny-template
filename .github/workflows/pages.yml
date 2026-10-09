@@ -29,12 +29,7 @@ jobs:
       - name: Install micromamba
         uses: mamba-org/setup-micromamba@v3
         with:
-          environment-name: ci-env
-          create-args: >-
-            python
-            pip
-            nodejs
-            lucent-pack
+          environment-file: ci_env.yml
           init-shell: bash
 
       - name: Create wasm prefix
